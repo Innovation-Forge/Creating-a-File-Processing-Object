@@ -1,0 +1,86 @@
+# Importing necessary libraries
+import os           # For interacting with the operating system
+import time         # For time-related functions
+from binascii import hexlify   # For converting binary data to hex
+import pwd          # For accessing user information in Unix/Linux
+
+# Defining the FileProcessor class
+class FileProcessor:
+
+    # Constructor for FileProcessor class
+    def __init__(self, filepath):
+        # Check if the file exists, raise ValueError if it doesn't
+        if not os.path.exists(filepath):
+            raise ValueError(f"File {filepath} does not exist")
+        # Assigning file path to instance variable
+        self.filepath = filepath
+        # Getting and storing file metadata
+        self.metadata = self._get_file_metadata(filepath)
+        # Initializing header attribute to None
+        self.header = None
+
+    # Method to get file metadata
+    def _get_file_metadata(self, filepath):
+        # Getting file status
+        stat_info = os.stat(filepath)
+        # Returning a dictionary with file metadata
+        return {
+            "size": stat_info.st_size,  # File size
+            "creation_time": time.ctime(stat_info.st_ctime),  # Creation time
+            "modified_time": time.ctime(stat_info.st_mtime),  # Modified time
+            "access_time": time.ctime(stat_info.st_atime),  # Access time
+            "owner": pwd.getpwuid(stat_info.st_uid).pw_name  # File owner
+        }
+
+    # Method to extract the first 20 bytes of file header
+    def GetFileHeader(self):
+        # Opening file in binary read mode
+        with open(self.filepath, 'rb') as file:
+            # Reading and storing the first 20 bytes
+            self.header = file.read(20)
+
+    # Method to print file details
+    def PrintFileDetails(self):
+        # Printing the file path
+        print(f"File: {self.filepath}")
+        # Looping through and printing each metadata item
+        for key, value in self.metadata.items():
+            print(f"{key.capitalize()}: {value}")
+        # Printing the header in hex format if it exists
+        if self.header is not None:
+            print(f"Header (hex): {hexlify(self.header).decode()}")
+
+# Main function definition
+def main():
+    # Starting an infinite loop for user input
+    while True:
+        # Asking user for directory path
+        dirPath = input("Enter a Directory to Scan or Q to Quit: ")
+        # Breaking loop if user enters 'Q'
+        if dirPath.upper() == 'Q':
+            break
+        # Checking if directory exists
+        if not os.path.exists(dirPath):
+            print("Directory does not exist. Please try again.")
+            continue
+        # Iterating over each file in the directory
+        for filename in os.listdir(dirPath):
+            # Creating full file path
+            filepath = os.path.join(dirPath, filename)
+            # Processing if it's a file
+            if os.path.isfile(filepath):
+                try:
+                    # Creating FileProcessor object
+                    file_processor = FileProcessor(filepath)
+                    # Getting file header
+                    file_processor.GetFileHeader()
+                    # Printing file details
+                    file_processor.PrintFileDetails()
+                # Handling exceptions
+                except Exception as e:
+                    print(f"Error processing file {filename}: {e}")
+
+# Checking if script is the main program
+if __name__ == "__main__":
+    # Executing the main function
+    main()
